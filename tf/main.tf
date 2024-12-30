@@ -9,8 +9,8 @@ data "external" "git_hash" {
 }
 
 locals {
-  app_tag     = "cr.yandex/${yandex_container_registry.demo-registry.id}/app:${data.external.git_hash.result.sha}"
-  sidecar_tag = "cr.yandex/${yandex_container_registry.demo-registry.id}/sidecar:${data.external.git_hash.result.sha}"
+  app_tag  = "cr.yandex/${yandex_container_registry.demo-registry.id}/app:${data.external.git_hash.result.sha}"
+  init_tag = "cr.yandex/${yandex_container_registry.demo-registry.id}/init:${data.external.git_hash.result.sha}"
 }
 
 resource "null_resource" "build_app" {
@@ -29,7 +29,7 @@ resource "null_resource" "build_sidecar" {
   }
 
   provisioner "local-exec" {
-    command = "cd .. && docker build --platform linux/amd64 -t ${local.sidecar_tag} -f ./yc.Dockerfile . && docker push ${local.sidecar_tag}"
+    command = "cd .. && docker build --platform linux/amd64 -t ${local.init_tag} -f ./yc.Dockerfile . && docker push ${local.init_tag}"
   }
 }
 
@@ -73,19 +73,19 @@ resource "yandex_compute_instance" "default" {
 
   network_interface {
     subnet_id = data.yandex_vpc_subnet.default-d.id
-    nat = true
+    nat       = true
   }
 
   metadata = {
     docker-compose = templatefile("docker-compose.yaml", {
-      app_image     = local.app_tag,
-      sidecar_image = local.sidecar_tag
-      secret_id = yandex_lockbox_secret.app_config.id
+      app_image  = local.app_tag,
+      init_image = local.init_tag
+      secret_id  = yandex_lockbox_secret.app_config.id
     })
     user-data = templatefile("user-data.yaml", {
       SSH_PUBLIC_KEY = trimspace(file("~/.ssh/id_rsa.pub")),
     })
-    enable-oslogin=false
+    enable-oslogin = false
   }
 
   service_account_id = yandex_iam_service_account.vm_sa.id
