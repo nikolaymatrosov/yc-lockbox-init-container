@@ -1,11 +1,19 @@
 version: "3.7"
+volumes:
+  # Use this volume to mount the configuration file into the app container
+  app-config: {}
 services:
   app:
     image: ${app_image}
     depends_on:
       sidecar:
         condition: service_completed_successfully
+    volumes:
+      - app-config:/etc/demo
+    ports:
+      - "8080:8080"
   sidecar:
     image: ${sidecar_image}
-    command:
-      - yc lockbox
+    command: bash -c "yc lockbox payload get --id ${secret_id} --key config > /etc/demo/config.json"
+    volumes:
+      - app-config:/etc/demo
