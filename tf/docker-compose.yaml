@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  app:
+    image: ${app_image}
+    depends_on:
+      sidecar:
+        condition: service_completed_successfully
+  sidecar:
+    image: ${sidecar_image}
+    command:
+      - yc lockbox
