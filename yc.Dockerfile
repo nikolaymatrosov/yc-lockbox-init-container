@@ -2,7 +2,7 @@ FROM alpine:3.21
 
 WORKDIR /
 
-RUN apk --update add ca-certificates wget jq bash
+RUN apk --update add ca-certificates wget jq bash curl
 
 ENV HOME=/
 ENV PATH=/yandex-cloud/bin:$PATH
